@@ -1,0 +1,1 @@
+{"root":["./src/app.tsx","./src/api.ts","./src/main.tsx","./src/score.ts","./src/types.ts","./src/components/bottomsheet.tsx","./src/components/detailpanel.tsx","./src/components/mapview.tsx","./src/components/resultcard.tsx","./src/components/resultslist.tsx","./src/components/scorebadge.tsx","./src/components/searchbar.tsx","./src/components/stars.tsx"],"version":"5.9.3"}
