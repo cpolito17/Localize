@@ -1,0 +1,17 @@
+{
+  "name": "localize",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Localize on Cloudflare Workers — API + static host for charliepolito.com/localize",
+  "scripts": {
+    "build:frontend": "npm --prefix frontend install && npm --prefix frontend run build",
+    "typecheck": "tsc -p worker/tsconfig.json --noEmit",
+    "dev": "npm run build:frontend && wrangler dev",
+    "deploy": "npm run build:frontend && npm run typecheck && wrangler deploy"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20260701.1",
+    "typescript": "^6.0.3",
+    "wrangler": "^4.86.0"
+  }
+}

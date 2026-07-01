@@ -8,11 +8,24 @@ Built per [localize-spec.md](localize-spec.md).
 
 ## Stack
 
-- **Backend** — Python / FastAPI. Proxies Google Places API (New) + Geocoding (server-side, IP-restricted key), computes the Localize score, caches derived classifications in SQLite.
 - **Frontend** — React + Vite, Google Maps JavaScript API (browser, referrer-restricted key), Framer Motion.
-- **Deployment** — Docker Compose: an nginx container serves the built frontend and proxies `/api` to the backend container.
+- **Deployment (live)** — a single **Cloudflare Worker** (`worker/`) serves the built frontend and the API under `/localize/api/*`, with Places (New) + Geocoding called server-side using a secret key and derived location-counts cached in **KV**. Access is gated by **Cloudflare Access** (Google login). See **[DEPLOY.md](DEPLOY.md)** for the full runbook.
+- **Reference backend** — the original Python / FastAPI service (`backend/`) and `docker-compose.yml`. Same logic and scoring, kept for local development and its unit tests; not used by the Cloudflare deployment.
 
-## Setup
+## Deploy to Cloudflare (`charliepolito.com/localize`)
+
+Follow **[DEPLOY.md](DEPLOY.md)** — it covers the two restricted Google keys, the
+Google login gate via Cloudflare Access, storing secrets, and `npm run deploy`.
+Quick version once keys and Access are set up:
+
+```sh
+npx wrangler login
+npx wrangler secret put GOOGLE_MAPS_SERVER_KEY
+npx wrangler secret put GOOGLE_MAPS_BROWSER_KEY
+npm run deploy
+```
+
+## Setup (reference Docker/FastAPI stack)
 
 ### 1. Google Maps Platform
 

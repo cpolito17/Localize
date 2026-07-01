@@ -1,0 +1,33 @@
+name = "localize"
+main = "worker/index.ts"
+compatibility_date = "2024-12-01"
+
+# Serve on the subpath of the existing site. Both patterns are needed: the
+# bare path (redirected to a trailing slash) and everything beneath it.
+# Requires charliepolito.com to be an active, proxied zone in this account.
+routes = [
+  { pattern = "charliepolito.com/localize", zone_name = "charliepolito.com" },
+  { pattern = "charliepolito.com/localize/*", zone_name = "charliepolito.com" },
+]
+
+# The built frontend. Vite emits into frontend/dist/localize (base=/localize/),
+# so a request for /localize/assets/x.js maps to that file and is served
+# directly by Cloudflare's asset host — the Worker only runs for /localize/api/*.
+[assets]
+directory = "./frontend/dist"
+binding = "ASSETS"
+
+# Derived location-count cache (replaces the old SQLite file).
+# Fill in `id` after `wrangler kv namespace create CACHE` (see DEPLOY.md).
+[[kv_namespaces]]
+binding = "CACHE"
+id = "b8e682c64b15403093a321d0e8443426"
+
+[vars]
+# Non-secret. A real Map ID (Google Cloud > Map Management) removes the
+# "development purposes only" watermark; DEMO_MAP_ID works to start.
+GOOGLE_MAPS_MAP_ID = "DEMO_MAP_ID"
+
+# Secrets (NOT stored here — set with `wrangler secret put`):
+#   GOOGLE_MAPS_SERVER_KEY   Places API (New) + Geocoding, server-side only
+#   GOOGLE_MAPS_BROWSER_KEY  Maps JavaScript API only, referrer-locked

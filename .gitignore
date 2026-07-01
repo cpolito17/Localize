@@ -16,6 +16,10 @@ out/
 .env
 .env.*
 *.local
+.dev.vars
+
+# Cloudflare / Wrangler
+.wrangler/
 
 # Logs
 *.log
