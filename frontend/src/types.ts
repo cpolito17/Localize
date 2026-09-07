@@ -3,6 +3,7 @@ export interface AppConfig {
   tagline: string;
   mapsBrowserKey: string;
   mapId: string;
+  anonymousDailySearchLimit: number;
 }
 
 export interface Bounds {

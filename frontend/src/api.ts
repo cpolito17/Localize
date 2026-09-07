@@ -1,5 +1,7 @@
 import type { AppConfig, Bounds, PlaceDetails, SearchResponse } from "./types";
 
+const API_BASE = `${import.meta.env.BASE_URL.replace(/\/$/, "")}/api`;
+
 async function request<T>(url: string, init?: RequestInit): Promise<T> {
   const res = await fetch(url, init);
   if (!res.ok) {
@@ -16,23 +18,24 @@ async function request<T>(url: string, init?: RequestInit): Promise<T> {
 }
 
 export const api = {
-  config: () => request<AppConfig>("/api/config"),
+  config: () => request<AppConfig>(`${API_BASE}/config`),
 
   search: (query: string, bounds: Bounds, userLocation: { lat: number; lng: number } | null) =>
-    request<SearchResponse>("/api/search", {
+    request<SearchResponse>(`${API_BASE}/search`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ query, bounds, userLocation }),
     }),
 
-  place: (placeId: string) => request<PlaceDetails>(`/api/place/${encodeURIComponent(placeId)}`),
+  place: (placeId: string) =>
+    request<PlaceDetails>(`${API_BASE}/place/${encodeURIComponent(placeId)}`),
 
   geocode: (q: string) =>
     request<{ lat: number; lng: number; formattedAddress: string }>(
-      `/api/geocode?q=${encodeURIComponent(q)}`
+      `${API_BASE}/geocode?q=${encodeURIComponent(q)}`
     ),
 };
 
 export function photoUrl(name: string, width = 480): string {
-  return `/api/photo?name=${encodeURIComponent(name)}&w=${width}`;
+  return `${API_BASE}/photo?name=${encodeURIComponent(name)}&w=${width}`;
 }

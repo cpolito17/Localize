@@ -4,13 +4,13 @@ import re
 from dataclasses import dataclass
 from pathlib import Path
 
-_PUNCT = re.compile(r"[^a-z0-9& ]+")
+_PUNCT = re.compile(r"[^\w& ]+", re.UNICODE)
 _SPACES = re.compile(r"\s+")
 
 
 def normalize_name(name: str) -> str:
     """Lowercase, strip punctuation and a leading 'the', collapse whitespace."""
-    s = _PUNCT.sub(" ", name.lower().replace("'", ""))
+    s = _PUNCT.sub(" ", name.lower().replace("'", "").replace("_", " "))
     s = _SPACES.sub(" ", s).strip()
     if s.startswith("the "):
         s = s[4:]
@@ -64,7 +64,11 @@ class Denylist:
         host = _host_of(website)
         for brand in self.brands:
             for bn in brand.names:
-                if n == bn or n.startswith(bn + " "):
+                # Very short or single-word names are ordinary language too:
+                # "Gap Fillers" and "Target Archery" are not retail chains.
+                # Longer names remain prefix-matchable for location suffixes.
+                prefix_safe = " " in bn or len(bn) >= 7
+                if n == bn or (prefix_safe and n.startswith(bn + " ")):
                     return brand
             if host:
                 for d in brand.domains:

@@ -5,16 +5,28 @@ services:
       GOOGLE_MAPS_SERVER_KEY: ${GOOGLE_MAPS_SERVER_KEY}
       GOOGLE_MAPS_BROWSER_KEY: ${GOOGLE_MAPS_BROWSER_KEY}
       GOOGLE_MAPS_MAP_ID: ${GOOGLE_MAPS_MAP_ID:-DEMO_MAP_ID}
+      RATE_LIMIT_SECRET: ${RATE_LIMIT_SECRET}
+      RATE_LIMIT_SEARCHES_PER_DAY: ${RATE_LIMIT_SEARCHES_PER_DAY:-8}
+      RATE_LIMIT_SEARCHES_PER_MINUTE: ${RATE_LIMIT_SEARCHES_PER_MINUTE:-3}
+      RATE_LIMIT_IP_MULTIPLIER: ${RATE_LIMIT_IP_MULTIPLIER:-4}
+      RATE_LIMIT_GLOBAL_SEARCHES_PER_DAY: ${RATE_LIMIT_GLOBAL_SEARCHES_PER_DAY:-40}
+      GOOGLE_API_DAILY_LIMIT: ${GOOGLE_API_DAILY_LIMIT:-300}
     volumes:
       - cache-data:/data
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/api/health', timeout=3)"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
 
   frontend:
     build: ./frontend
     ports:
       - "${LOCALIZE_PORT:-8080}:80"
     depends_on:
-      - backend
+      backend:
+        condition: service_healthy
     restart: unless-stopped
 
 volumes:

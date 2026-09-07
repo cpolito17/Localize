@@ -1,6 +1,7 @@
 import { AnimatePresence, motion } from "framer-motion";
 import { FormEvent, useCallback, useEffect, useRef, useState } from "react";
 import { api } from "./api";
+import charlieMark from "./assets/charlie-polito.svg";
 import BottomSheet from "./components/BottomSheet";
 import DetailPanel from "./components/DetailPanel";
 import MapView from "./components/MapView";
@@ -11,7 +12,7 @@ import type { AppConfig, Bounds, SearchResult } from "./types";
 const DEFAULT_QUERY = "local shops";
 const SPARSE_THRESHOLD = 4;
 
-type Phase = "boot" | "locate" | "manual-location" | "ready" | "no-key";
+type Phase = "boot" | "locate" | "manual-location" | "ready" | "no-key" | "backend-error";
 
 function useIsMobile(): boolean {
   const [mobile, setMobile] = useState(() => window.matchMedia("(max-width: 767px)").matches);
@@ -27,6 +28,7 @@ function useIsMobile(): boolean {
 export default function App() {
   const [config, setConfig] = useState<AppConfig | null>(null);
   const [phase, setPhase] = useState<Phase>("boot");
+  const [bootAttempt, setBootAttempt] = useState(0);
   const [center, setCenter] = useState<{ lat: number; lng: number } | null>(null);
 
   const [results, setResults] = useState<SearchResult[]>([]);
@@ -73,8 +75,8 @@ export default function App() {
           { timeout: 8000, maximumAge: 300000 }
         );
       })
-      .catch(() => setPhase("no-key"));
-  }, []);
+      .catch(() => setPhase("backend-error"));
+  }, [bootAttempt]);
 
   const runSearch = useCallback(async (query: string, bounds: Bounds) => {
     lastQueryRef.current = query;
@@ -163,6 +165,24 @@ export default function App() {
     );
   }
 
+  if (phase === "backend-error") {
+    return (
+      <Hero>
+        <p className="hero-note">Localize couldn't reach its search service.</p>
+        <button
+          type="button"
+          className="btn btn-primary"
+          onClick={() => {
+            setPhase("boot");
+            setBootAttempt((attempt) => attempt + 1);
+          }}
+        >
+          Try again
+        </button>
+      </Hero>
+    );
+  }
+
   if (phase === "locate") {
     return (
       <Hero tagline={config?.tagline}>
@@ -211,8 +231,12 @@ export default function App() {
       {!isMobile && (
         <aside className="sidebar">
           <header className="sidebar-header">
+            <PortfolioLink />
             <Logo />
             <p className="tagline">{config.tagline}</p>
+            <p className="quota-note">
+              Public demo · {config.anonymousDailySearchLimit} searches per browser each day
+            </p>
             <SearchBar compact={false} onSearch={handleQuery} />
           </header>
           {searchError ? <ErrorNote message={searchError} /> : <ResultsList {...listProps} />}
@@ -234,6 +258,7 @@ export default function App() {
 
         {isMobile && (
           <div className="mobile-top">
+            <PortfolioLink compact />
             <SearchBar compact onSearch={handleQuery} />
           </div>
         )}
@@ -289,9 +314,25 @@ function Logo() {
   );
 }
 
+function PortfolioLink({ compact = false }: { compact?: boolean }) {
+  return (
+    <a
+      className={`portfolio-return${compact ? " portfolio-return-compact" : ""}`}
+      href="https://charliepolito.com/"
+      aria-label="Back to Charlie Polito's portfolio"
+    >
+      <img src={charlieMark} alt="" width="24" height="24" />
+      <span>CharliePolito.com</span>
+    </a>
+  );
+}
+
 function Hero({ tagline, children }: { tagline?: string; children: React.ReactNode }) {
   return (
     <div className="hero">
+      <div className="hero-return">
+        <PortfolioLink />
+      </div>
       <motion.div
         className="hero-inner"
         initial={{ opacity: 0, y: 12 }}

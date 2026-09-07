@@ -32,9 +32,11 @@ export function formatDistance(meters: number): string {
   return `${miles < 10 ? miles.toFixed(1) : Math.round(miles)} mi`;
 }
 
-/** §7.6: Apple Maps on iOS, Google Maps everywhere else. */
+/** §7.6: Apple Maps on iOS/iPadOS, Google Maps everywhere else. */
 export function mapsUrl(name: string, lat: number, lng: number, googleMapsUri: string | null): string {
-  const isApple = /iPhone|iPad|iPod/.test(navigator.userAgent);
+  const ua = navigator.userAgent;
+  const isApple =
+    /iPhone|iPad|iPod/.test(ua) || (ua.includes("Macintosh") && navigator.maxTouchPoints > 1);
   if (isApple) {
     return `https://maps.apple.com/?q=${encodeURIComponent(name)}&ll=${lat},${lng}`;
   }

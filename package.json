@@ -1,0 +1,24 @@
+{
+  "name": "localize",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Localize API and frontend on one Cloudflare Worker",
+  "scripts": {
+    "build:frontend": "npm --prefix frontend run build",
+    "typecheck": "npm run types && tsc -p worker/tsconfig.json --noEmit",
+    "test:worker": "vitest run",
+    "check": "npm run typecheck && npm run test:worker && npm run build:frontend",
+    "types": "wrangler types worker-configuration.d.ts",
+    "migrate:local": "wrangler d1 migrations apply localize-state --local",
+    "migrate:remote": "wrangler d1 migrations apply localize-state --remote",
+    "dev": "npm run build:frontend && wrangler dev",
+    "deploy:dry-run": "npm run build:frontend && npm run typecheck && wrangler deploy --dry-run",
+    "deploy": "npm run build:frontend && npm run typecheck && npm run test:worker && npm run migrate:remote && wrangler deploy"
+  },
+  "devDependencies": {
+    "@types/node": "^26.5.0",
+    "typescript": "^5.9.2",
+    "vitest": "^3.2.4",
+    "wrangler": "^4.35.0"
+  }
+}

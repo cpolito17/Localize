@@ -5,6 +5,8 @@ def test_normalize_name():
     assert normalize_name("The Home Depot") == "home depot"
     assert normalize_name("Joe's  Hardware!") == "joes hardware"
     assert normalize_name("LOWE'S Home Improvement") == "lowes home improvement"
+    assert normalize_name("Café Zola") == "café zola"
+    assert normalize_name("서울 상점") == "서울 상점"
 
 
 def test_query_match_pivots_to_category():
@@ -30,6 +32,10 @@ def test_business_match_by_name_prefix():
     assert dl.match_business("The Home Depot", None).brand == "Home Depot"
     # Not a prefix-word match: "Targeted Fitness" must not match "Target".
     assert dl.match_business("Targeted Fitness", None) is None
+    assert dl.match_business("Target Archery Range", None) is None
+    assert dl.match_business("Gap Fillers Drywall", None) is None
+    assert dl.match_business("Napa Valley Wine Tours", None) is None
+    assert dl.match_business("NAPA Auto Parts", None).brand == "NAPA Auto Parts"
 
 
 def test_business_match_by_domain():

@@ -97,6 +97,21 @@ def test_count_is_cached(scorer):
     assert fake.search_calls == calls_after_first
 
 
+def test_zero_verified_locations_is_provisional(scorer):
+    s, _ = scorer({"unverified shop": 0})
+    cls = classify(s, "Unverified Shop")
+    assert cls.score == 70
+    assert cls.location_count is None
+    assert "provisional" in cls.reason
+
+
+def test_location_count_cache_is_scoped_to_geo_bucket(scorer):
+    s, fake = scorer({"joes hardware": 1})
+    asyncio.run(s.classify("Joe's Hardware", None, [], 10, (42.28, -83.74)))
+    asyncio.run(s.classify("Joe's Hardware", None, [], 10, (34.05, -118.24)))
+    assert fake.search_calls == 2
+
+
 def test_denylist_check_needs_no_search(scorer):
     s, fake = scorer({})
     classify(s, "Walmart Supercenter")

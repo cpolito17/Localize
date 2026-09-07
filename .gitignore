@@ -16,6 +16,13 @@ out/
 .env
 .env.*
 *.local
+!.env.example
+
+# Local runtime state
+*.db
+*.sqlite*
+*.tsbuildinfo
+worker-configuration.d.ts
 
 # Logs
 *.log

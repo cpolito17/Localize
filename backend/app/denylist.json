@@ -37,7 +37,7 @@
     { "brand": "AutoZone", "aliases": [], "domains": ["autozone.com"], "kind": "bigbox", "category": "auto parts store" },
     { "brand": "O'Reilly Auto Parts", "aliases": ["oreilly auto parts"], "domains": ["oreillyauto.com"], "kind": "bigbox", "category": "auto parts store" },
     { "brand": "Advance Auto Parts", "aliases": [], "domains": ["advanceautoparts.com"], "kind": "bigbox", "category": "auto parts store" },
-    { "brand": "NAPA Auto Parts", "aliases": ["napa"], "domains": ["napaonline.com"], "kind": "bigbox", "category": "auto parts store" },
+    { "brand": "NAPA Auto Parts", "aliases": [], "domains": ["napaonline.com"], "kind": "bigbox", "category": "auto parts store" },
     { "brand": "Jiffy Lube", "aliases": [], "domains": ["jiffylube.com"], "kind": "bigbox", "category": "auto repair shop" },
     { "brand": "Valvoline Instant Oil Change", "aliases": ["valvoline"], "domains": ["vioc.com", "valvoline.com"], "kind": "bigbox", "category": "auto repair shop" },
     { "brand": "Tractor Supply", "aliases": ["tractor supply co", "tractor supply company"], "domains": ["tractorsupply.com"], "kind": "bigbox", "category": "farm supply store" },

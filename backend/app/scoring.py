@@ -1,6 +1,7 @@
 """The Localize score (§6): denylist hard cap, location-count heuristic,
 minor modifiers. Deterministic throughout."""
 import asyncio
+import weakref
 from dataclasses import dataclass, field
 
 from . import config
@@ -62,7 +63,9 @@ class Scorer:
         self.denylist = denylist
         self.cache = cache
         self.places = places
-        self._count_locks: dict[str, asyncio.Lock] = {}
+        self._count_locks: weakref.WeakValueDictionary[str, asyncio.Lock] = (
+            weakref.WeakValueDictionary()
+        )
 
     def classify_denylisted(self, brand: Brand) -> Classification:
         if brand.kind == "ecommerce":
@@ -100,10 +103,17 @@ class Scorer:
             return self.classify_denylisted(brand)
 
         norm = normalize_name(name)
-        count = self.cache.get_count(norm)
+        if not norm:
+            return self._unknown_location_count()
+
+        bucket = self._geo_bucket(center)
+        count = self.cache.get_count(norm, bucket)
         if count is None:
-            count = await self._count_locations(norm, center)
-            self.cache.set_count(norm, count)
+            count = await self._count_locations(norm, center, bucket)
+            self.cache.set_count(norm, bucket, count)
+
+        if count == 0:
+            return self._unknown_location_count()
 
         score = _count_to_score(count)
         breakdown = []
@@ -134,24 +144,58 @@ class Scorer:
             location_count=count,
         )
 
-    async def _count_locations(self, normalized_name: str, center: tuple[float, float]) -> int:
+    @staticmethod
+    def _geo_bucket(center: tuple[float, float]) -> str:
+        """Coarse metro-sized cell so identical names do not leak across regions."""
+        lat, lng = center
+        return f"{round(lat):+04d}:{round(lng):+04d}"
+
+    @staticmethod
+    def _unknown_location_count() -> Classification:
+        score = 70
+        return Classification(
+            score=score,
+            tier=tier_for_score(score),
+            reason="Other locations could not be verified, so this score is provisional.",
+            breakdown=[
+                "Location count could not be verified",
+                "Not on the national-retailer list",
+            ],
+            location_count=None,
+        )
+
+    async def _count_locations(
+        self,
+        normalized_name: str,
+        center: tuple[float, float],
+        bucket: str,
+    ) -> int:
         """§6 signal 2: wide-area name search, count matching locations."""
-        lock = self._count_locks.setdefault(normalized_name, asyncio.Lock())
+        lock_key = f"{normalized_name}:{bucket}"
+        lock = self._count_locks.setdefault(lock_key, asyncio.Lock())
         async with lock:
-            cached = self.cache.get_count(normalized_name)
+            cached = self.cache.get_count(normalized_name, bucket)
             if cached is not None:
                 return cached
             lat, lng = center
             rect = {
                 "south": max(-90.0, lat - config.COUNT_AREA_HALF_LAT),
                 "north": min(90.0, lat + config.COUNT_AREA_HALF_LAT),
-                "west": lng - config.COUNT_AREA_HALF_LNG,
-                "east": lng + config.COUNT_AREA_HALF_LNG,
+                "west": max(-180.0, lng - config.COUNT_AREA_HALF_LNG),
+                "east": min(180.0, lng + config.COUNT_AREA_HALF_LNG),
             }
-            places = await self.places.search_text(normalized_name, rect, max_results=60)
+            places = await self.places.search_text(
+                normalized_name,
+                rect,
+                max_results=config.COUNT_SEARCH_MAX_RESULTS,
+            )
             count = 0
             for p in places:
                 pname = normalize_name(p.get("displayName", {}).get("text", ""))
                 if pname == normalized_name or pname.startswith(normalized_name + " "):
                     count += 1
-            return max(1, count)
+            # We deliberately request only one page to cap cost. A full page of
+            # exact name matches is enough evidence for the national-chain band.
+            if len(places) >= config.COUNT_SEARCH_MAX_RESULTS and count >= len(places):
+                return 41
+            return count

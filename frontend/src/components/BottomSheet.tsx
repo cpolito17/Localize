@@ -75,7 +75,7 @@ export default function BottomSheet({ children }: Props) {
       >
         <div className="sheet-handle" />
       </div>
-      <div className={`sheet-content${snap === "full" ? " sheet-content-scroll" : ""}`}>
+      <div className={`sheet-content${snap !== "peek" ? " sheet-content-scroll" : ""}`}>
         {children}
       </div>
     </motion.div>

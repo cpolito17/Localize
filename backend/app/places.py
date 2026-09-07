@@ -1,6 +1,8 @@
 """Thin async client for Google Places API (New) and the Geocoding API."""
 import httpx
 
+from .rate_limit import LimitRule, UsageLimiter
+
 PLACES_BASE = "https://places.googleapis.com/v1"
 GEOCODE_URL = "https://maps.googleapis.com/maps/api/geocode/json"
 
@@ -41,9 +43,25 @@ DETAILS_FIELDS = ",".join(
 
 
 class PlacesClient:
-    def __init__(self, api_key: str, http: httpx.AsyncClient):
+    def __init__(
+        self,
+        api_key: str,
+        http: httpx.AsyncClient,
+        usage_limiter: UsageLimiter | None = None,
+        daily_limit: int = 0,
+    ):
         self.api_key = api_key
         self.http = http
+        self.usage_limiter = usage_limiter
+        self.daily_limit = daily_limit
+
+    def _consume_quota(self) -> None:
+        if not self.usage_limiter or self.daily_limit <= 0:
+            return
+        self.usage_limiter.consume(
+            [LimitRule("google-api", "global", self.daily_limit, 86400)],
+            "Localize has reached today's Google API safety limit. Try again tomorrow.",
+        )
 
     def _headers(self, field_mask: str) -> dict:
         return {
@@ -66,6 +84,7 @@ class PlacesClient:
         results: list[dict] = []
         token: str | None = None
         while True:
+            self._consume_quota()
             body: dict = {"textQuery": query, "pageSize": 20}
             if rect:
                 body["locationRestriction"] = {
@@ -90,6 +109,7 @@ class PlacesClient:
         return results[:max_results]
 
     async def details(self, place_id: str) -> dict:
+        self._consume_quota()
         resp = await self.http.get(
             f"{PLACES_BASE}/places/{place_id}",
             headers=self._headers(DETAILS_FIELDS),
@@ -99,6 +119,7 @@ class PlacesClient:
 
     async def photo(self, photo_name: str, max_width: int) -> httpx.Response:
         """Fetch photo bytes (the media endpoint 302s to the image)."""
+        self._consume_quota()
         return await self.http.get(
             f"{PLACES_BASE}/{photo_name}/media",
             params={"maxWidthPx": max_width, "key": self.api_key},
@@ -106,6 +127,7 @@ class PlacesClient:
         )
 
     async def geocode(self, address: str) -> dict | None:
+        self._consume_quota()
         resp = await self.http.get(
             GEOCODE_URL, params={"address": address, "key": self.api_key}
         )

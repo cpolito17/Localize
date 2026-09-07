@@ -1,9 +1,10 @@
 FROM node:20-slim AS build
 WORKDIR /app
 COPY package.json package-lock.json* ./
-RUN npm install --no-fund --no-audit
+RUN npm ci --no-fund --no-audit
 COPY tsconfig.json vite.config.ts index.html ./
 COPY src ./src
+COPY public ./public
 RUN npm run build
 
 FROM nginx:1.27-alpine

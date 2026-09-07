@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /localize/
+
+Sitemap: https://charliepolito.com/localize/sitemap.xml

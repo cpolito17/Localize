@@ -1,0 +1,49 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "localize",
+  "main": "worker/index.ts",
+  "compatibility_date": "2026-09-07",
+  "compatibility_flags": ["nodejs_compat"],
+  "workers_dev": false,
+  "routes": [
+    { "pattern": "charliepolito.com/localize", "zone_name": "charliepolito.com" },
+    { "pattern": "charliepolito.com/localize/*", "zone_name": "charliepolito.com" }
+  ],
+  "assets": {
+    "directory": "./frontend/dist",
+    "binding": "ASSETS",
+    "run_worker_first": true
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "localize-state",
+      "database_id": "74498b16-24ac-4152-bfc8-9b795703b7ba",
+      "migrations_dir": "migrations"
+    }
+  ],
+  "ratelimits": [
+    {
+      "name": "BROWSER_RATE_LIMITER",
+      "namespace_id": "17006",
+      "simple": { "limit": 3, "period": 60 }
+    },
+    {
+      "name": "IP_RATE_LIMITER",
+      "namespace_id": "17007",
+      "simple": { "limit": 12, "period": 60 }
+    }
+  ],
+  "vars": {
+    "GOOGLE_MAPS_MAP_ID": "DEMO_MAP_ID",
+    "RATE_LIMIT_SEARCHES_PER_DAY": "8",
+    "RATE_LIMIT_IP_MULTIPLIER": "4",
+    "RATE_LIMIT_GLOBAL_SEARCHES_PER_DAY": "40",
+    "GOOGLE_API_DAILY_LIMIT": "300"
+  },
+  "observability": {
+    "enabled": true,
+    "head_sampling_rate": 0.1,
+    "logs": { "invocation_logs": true }
+  }
+}
